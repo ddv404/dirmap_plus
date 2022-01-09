@@ -48,4 +48,72 @@ dirmap增加web服务功能
 	首先常规的使用方式还是可以正常使用的。具体见dirmap作者的GitHub端详https://github.com/H4ckForJob/dirmap
 	第一步：使用 -iD 参数运行dirmap
 		python3 dirmap.py -iD ddv.db -lcf
-![image](https://user-images.githubusercontent.com/97394404/148688449-998390e1-8e53-4354-9a2a-9969f7f088b1.png)
+![image](img/1.png)
+第二步：运行web服务脚本
+运行前需要调整一下脚本参数
+![image](img/2.png)
+在第31行auth_key设置API接口的认证值
+在第32行db_file_name设置sqlite文件名称（该文件名需要和dirmap参数-iD值一致）
+	运行	python3 services.py
+![image](img/3.png)
+通过以上加增使dirmap具有开启web服务提供api接口的能力了。
+
+以上dirmap新增部分。
+
+三、	Burpsuite插件介绍
+基本思路：获取bp抓的数据包，提取其中的url地址和cookie信息。将url和cookie数据发送到web服务中供dirmap扫描。在通过bp插件查询扫描的结束。（考虑到有些接口是需要待cookie的情况，那就把cookie也带上吧。）
+	
+	插件名：PathDirScan
+![image](img/4.png)
+其中
+API输入框为services.py脚本开启的端口地址即可。
+KEY输入框为api接口的认证值（在services.py第32行设置）。
+PROJECT输入框为项目名称便于区分项目查询。
+White host list输入框为白名单列表，如果需要扫描所有过bp的url 可以设置为 * （一般不建议这么做），通常设置目标单位的根域即可。
+USE COOKIE选项为是否开启向api接口发送cookie值。
+FIXE COOKIE选项为是否使用固定cookie发送，还是发送数据包的动态cookie。
+CLEAN 按钮为清空已发送的目标url地址，也就是左侧的大框。
+CONNECT按钮为测试API接口是否可用按钮。
+OPEN选项为开启发送扫描地址给接口。
+左侧大框为发送给API接口的url地址（例如：http://x.x.x./a/b/c ，将会被自动解析为：http://x.x.x./ ，http://x.x.x./a/，http://x.x.x./a/b/，http://x.x.x./a/b/c ）
+右侧大框为扫描的结果，点击左侧的url将加载对应的扫描结果。
+
+操作逻辑：
+根据自左向右，从上到下的逻辑进行填写。
+API、KEY、white host list为必填项
+每次修改参数后，需要点击一次CONNECT
+![image](img/5.png)
+然后在选中open选项。该选项需要在CONNECT后再选中
+![image](img/6.png)
+
+示例运行：
+	在本地使用python3开启一个http.server服务
+python3 -m http.server 80
+![image](img/7.png)
+访问的地址为http://192.168.1.102/%E5%B7%A5%E5%85%B7/dirmap-master/output/
+BP插件截图
+![image](img/8.png)
+可见访问的是http://192.168.1.102/%E5%B7%A5%E5%85%B7/dirmap-master/output/
+扫描出在http://192.168.1.102/%E5%B7%A5%E5%85%B7/dirmap-master/路径下的文件
+
+使用test.py脚本可查看sqlite中的数据
+![image](img/9.png)
+![image](https://user-images.githubusercontent.com/97394404/148688885-c7153b46-fb3d-4d33-b7b2-27c54ef60f26.png)
+
+![image](https://user-images.githubusercontent.com/97394404/148688867-4b49ad2f-19f6-413c-a6c7-60b2b2ce1401.png)
+
+
+四、	加入爬虫联动思路
+实现自动化对目标站点所有url多层级进行目录爆破。只需要将爬虫代理到BP即可，
+爬虫实现站点所有链接项获取。插件实现所有链接项拆解，并发送到dirmap服务中。dirmap实现对目标url的扫描。
+![image](img/10.png)
+
+
+五、	总结
+经过加增后使dirmap具有提供web服务的能力。除了可以节省精力投入，方便爆破外。web服务方式可有效避免dirmap本地运行占用网络，IP频繁请求被封导致正常请求失效，本机性能消耗，dirmap服务器运行不变管理等问题。
+
+
+
+注：将dirmap中的线程值设的小一些，避免影响目标系统
+另外向dirmap（https://github.com/H4ckForJob/dirmap）作者致敬
+
