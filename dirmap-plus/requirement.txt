@@ -1,0 +1,7 @@
+gevent
+requests
+progressbar2
+lxml
+sqlite3
+uvicorn
+fastapi
