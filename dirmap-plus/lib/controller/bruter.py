@@ -482,15 +482,18 @@ def responseHandler(response,db_file_name,db_id):
         #使用replace()，替换`:`，修复window下不能创建有`:`的文件问题
         saveResults(urllib.parse.urlparse(response.url).netloc.replace(':','_'),msg)
         # 将结果数据保存到指定db中 （如果db_file_name长度大于0，表示当前是以iD模式运行的）
-        print('db_file_name')
+        # print('db_file_name')
         if len(db_file_name) > 0:
-            print(db_file_name)
+            # print(db_file_name)
             try:
                 conn = sqlite3.connect(db_file_name)
                 cursor = conn.cursor()
-                res = cursor.execute('INSERT INTO result_urls (target_urls_id,state,result_type,size,result_url) VALUES (?,?,?,?,?)',
-                (db_id,response.status_code,response.headers.get('content-type'), str(size),response.url))
-                print(res.fetchall())
+                # 可以添加逻辑如果已有相同target_urls_id存在相应包类型和大小相同 则不存入库中
+                values = cursor.execute("select id from result_urls where target_urls_id = ? and result_type = ? and size = ?",(db_id,response.headers.get('content-type'),str(size)))
+                if len(list(values)) == 0:
+                    res = cursor.execute('INSERT INTO result_urls (target_urls_id,state,result_type,size,result_url) VALUES (?,?,?,?,?)',
+                    (db_id,response.status_code,response.headers.get('content-type'), str(size),response.url))
+                # print(res.fetchall())
                 conn.commit()
                 conn.close()
             except Exception as e:

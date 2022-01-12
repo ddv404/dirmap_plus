@@ -15,12 +15,14 @@ import sys
 import time
 import ipaddress
 
+
 from lib.controller.bruter import loadConf
 from lib.core.common import parseTarget, outputscreen
 from lib.core.data import conf, paths
 from thirdlib.IPy.IPy import IP
 
 import sqlite3
+from urllib.parse import urlparse
 
 def initOptions(args):
     EngineRegister(args)
@@ -122,10 +124,22 @@ def TargetRegister(args):
         # if not os.path.isfile(args.target_db):
         try:
             # 初始化表
-            sql = 'CREATE table if not exists target_urls(id integer PRIMARY KEY autoincrement, url varchar(512) unique, state integer, time integer, cookie varchar(512),project_name  varchar(512) )'
+            # sql = 'CREATE table if not exists target_urls(id integer PRIMARY KEY autoincrement, url varchar(512) unique, state integer, time integer, cookie varchar(512),project_name  varchar(512) )'
+            # cursor.execute(sql)
+            # sql = 'CREATE table if not exists result_urls(id integer PRIMARY KEY autoincrement, target_urls_id integer, state integer, result_type varchar(100) , size varchar(200), result_url varchar(512))'
+            # cursor.execute(sql)
+
+            sql = 'CREATE table if not exists projects(id integer PRIMARY KEY autoincrement, project_name varchar(256) )'
             cursor.execute(sql)
-            sql = 'CREATE table if not exists result_urls(id integer PRIMARY KEY autoincrement, target_urls_id integer, state integer, result_type varchar(100) , size varchar(200), result_url varchar(512))'
+            # 如果中间关联表不存在就创建表
+            sql = 'CREATE table if not exists project_target_url(id integer PRIMARY KEY autoincrement, project_id integer, target_url_id integer )'
             cursor.execute(sql)
+            # 表结构
+            sql = 'CREATE table if not exists target_urls(id integer PRIMARY KEY autoincrement, url varchar(512) unique, state integer, time integer, cookie varchar(512))'
+            cursor.execute(sql)
+            sql = 'CREATE table if not exists result_urls(id integer PRIMARY KEY autoincrement, target_urls_id integer, state integer, result_type varchar(100) , size varchar(200), result_url varchar(512) unique)'
+            cursor.execute(sql)
+            
         except Exception as e:
             # outputscreen.error(122)
             outputscreen.error(str(e))
@@ -146,12 +160,38 @@ def TargetRegister(args):
         try:
             target_urls = cursor.execute("select url from target_urls where state = 0")
             target_urls = list(map(lambda x:x[0],target_urls))
+            # 为防止目标系统崩溃，同一个host:port的地址，一次最多只保留两个
+            temp_target_urls = {}
+            for target_url in target_urls:  
+                # url = 'http://www.baidu.com:81'
+                _url = urlparse(target_url)
+                hostname = _url.hostname
+                port = _url.port
+                
+                key = hostname
+                if port:
+                    key += str(port)
+
+                # 如果数据已经存在，并且长度达到两个
+                if key in temp_target_urls and len(temp_target_urls[key]) == 2:
+                    continue
+                elif key in temp_target_urls and len(temp_target_urls[key]) < 2:
+                    temp_target_urls[key].append(target_url)
+                elif key not in temp_target_urls:
+                    temp_target_urls[key] = [target_url]
+
+            # 组装目标地址
+            run_target_urls = []
+            for key in temp_target_urls:
+                run_target_urls.extend(temp_target_urls[key])
+
+
         except Exception as e:
             outputscreen.error(str(e))
             exit(0)
              
         # print(target_urls)
-        for target in target_urls:
+        for target in run_target_urls:
             target=target.strip('\n')
             parsed_target=parseTarget(target)
             for i in parsed_target:
