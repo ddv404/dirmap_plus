@@ -69,12 +69,16 @@ dirmap增加web服务功能
 API输入框为services.py脚本开启的端口地址即可。
 KEY输入框为api接口的认证值（在services.py第32行设置）。
 PROJECT输入框为项目名称便于区分项目查询。
+LOAD按钮将根据project值从服务端加载目标url地址信息
 White host list输入框为白名单列表，如果需要扫描所有过bp的url 可以设置为 * （一般不建议这么做），通常设置目标单位的根域即可。
 USE COOKIE选项为是否开启向api接口发送cookie值。
 FIXE COOKIE选项为是否使用固定cookie发送，还是发送数据包的动态cookie。
 CLEAN 按钮为清空已发送的目标url地址，也就是左侧的大框。
 CONNECT按钮为测试API接口是否可用按钮。
 OPEN选项为开启发送扫描地址给接口。
+info（OPEN右侧）为提示信息显示。
+NEW URL为手动点击目标url输入框。
+ADD URL按钮将手动目标url发送到服务端。
 左侧大框为发送给API接口的url地址（例如：http://x.x.x./a/b/c ，将会被自动解析为：http://x.x.x./ ，http://x.x.x./a/，http://x.x.x./a/b/，http://x.x.x./a/b/c ）
 右侧大框为扫描的结果，点击左侧的url将加载对应的扫描结果。
 
